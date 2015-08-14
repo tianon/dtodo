@@ -30,7 +30,16 @@ func main() {
 		log.Fatalf("error: %v\n", err)
 	}
 
-	allCan := true
+	incoming, err := resolver.GetBinaryIndex(
+		"http://incoming.debian.org/debian-buildd",
+		"buildd-"+suite,
+		"main",
+		arch,
+	)
+	if err != nil {
+		log.Fatalf("error: %v\n", err)
+	}
+
 	allPossi := append(
 		con.Source.BuildDepends.GetAllPossibilities(),
 		con.Source.BuildDependsIndep.GetAllPossibilities()...,
@@ -41,19 +50,15 @@ func main() {
 		log.Fatalf("error: %v\n", err)
 	}
 
-	allBins := []control.BinaryIndex{}
 	for _, possi := range allPossi {
-		can, why, bins := index.ExplainSatisfies(*depArch, possi)
+		can, why, _ := index.ExplainSatisfies(*depArch, possi)
 		if !can {
-			log.Printf("%s: %s\n", possi.Name, why)
-			allCan = false
-		} else {
-			// TODO more smarts for which dep out of bins to use
-			allBins = append(allBins, bins[0])
+			inCan, _, _ := incoming.ExplainSatisfies(*depArch, possi)
+			if !inCan {
+				log.Printf("%s: %s\n", possi.Name, why)
+			} else {
+				log.Printf("%s: in incoming!\n", possi.Name)
+			}
 		}
-	}
-
-	if !allCan {
-		log.Fatalf("Unsatisfied possi; exiting.\n")
 	}
 }
