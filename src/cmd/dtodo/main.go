@@ -40,6 +40,12 @@ func main() {
 		log.Fatalf("error: %v\n", err)
 	}
 
+	newQueue, err := ParseNewUrl(New822)
+	if err != nil {
+		log.Fatalf("error: %v\n", err)
+	}
+	log.Printf("%d packages in NEW\n", len(newQueue))
+
 	allPossi := append(
 		con.Source.BuildDepends.GetAllPossibilities(),
 		con.Source.BuildDependsIndep.GetAllPossibilities()...,
