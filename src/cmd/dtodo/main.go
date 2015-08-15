@@ -56,6 +56,17 @@ func main() {
 		con.Source.BuildDepends.GetAllPossibilities(),
 		con.Source.BuildDependsIndep.GetAllPossibilities()...,
 	)
+	for _, bin := range con.Binaries {
+		for _, dep := range []dependency.Dependency{
+			bin.Depends,
+			bin.Recommends,
+			bin.Suggests,
+			bin.Enhances,
+			bin.PreDepends,
+		} {
+			allPossi = append(allPossi, dep.GetAllPossibilities()...)
+		}
+	}
 
 	depArch, err := dependency.ParseArch("any")
 	if err != nil {
