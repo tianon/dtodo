@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"pault.ag/go/debian/control"
@@ -44,7 +45,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 	}
-	log.Printf("%d packages in NEW\n", len(newQueue))
+	newBinaries := map[string]NewEntry{}
+	for _, newPkg := range newQueue {
+		for _, newBin := range newPkg.Binary {
+			newBinaries[newBin] = newPkg
+		}
+	}
 
 	allPossi := append(
 		con.Source.BuildDepends.GetAllPossibilities(),
@@ -61,9 +67,14 @@ func main() {
 		if !can {
 			inCan, _, _ := incoming.ExplainSatisfies(*depArch, possi)
 			if !inCan {
-				log.Printf("%s: %s\n", possi.Name, why)
+				if newPkg, ok := newBinaries[possi.Name]; ok {
+					newUrl := fmt.Sprintf("https://ftp-master.debian.org/new/%s_%s.html", newPkg.Source, newPkg.Version[0])
+					fmt.Printf("%s: in NEW: %s\n", possi.Name, newUrl)
+				} else {
+					fmt.Printf("%s: %s\n", possi.Name, why)
+				}
 			} else {
-				log.Printf("%s: in incoming!\n", possi.Name)
+				fmt.Printf("%s: in incoming!\n", possi.Name)
 			}
 		}
 	}
