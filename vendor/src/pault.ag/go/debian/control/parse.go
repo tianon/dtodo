@@ -64,7 +64,7 @@ type Paragraph struct {
 // 	return ret
 // }
 
-func ParseOpenPGPParagraph(reader *bufio.Reader) (ret *Paragraph, ohshit error) {
+func ParseOpenPGPParagraph(reader *bufio.Reader) (*Paragraph, error) {
 	els := ""
 	for {
 		line, err := reader.ReadString('\n')
@@ -84,13 +84,13 @@ func ParseOpenPGPParagraph(reader *bufio.Reader) (ret *Paragraph, ohshit error) 
 }
 
 // Given a bufio.Reader, go through and return a Paragraph.
-func ParseParagraph(reader *bufio.Reader) (ret *Paragraph, ohshit error) {
+func ParseParagraph(reader *bufio.Reader) (*Paragraph, error) {
 	line, _ := reader.Peek(15)
 	if string(line) == "-----BEGIN PGP " {
 		return ParseOpenPGPParagraph(reader)
 	}
 
-	ret = &Paragraph{
+	ret := &Paragraph{
 		Values: map[string]string{},
 		Order:  []string{},
 	}
@@ -128,11 +128,11 @@ func ParseParagraph(reader *bufio.Reader) (ret *Paragraph, ohshit error) {
 			ret.Order = append(ret.Order, key)
 			continue
 		default:
-			return nil, fmt.Errorf("The shit.")
+			return nil, fmt.Errorf("Line %q is not 'key: val'", line)
 		}
 	}
 
-	return
+	return ret, nil
 }
 
 // vim: foldmethod=marker
