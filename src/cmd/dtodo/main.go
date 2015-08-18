@@ -52,10 +52,21 @@ func main() {
 		}
 	}
 
-	allPossi := append(
-		con.Source.BuildDepends.GetAllPossibilities(),
-		con.Source.BuildDependsIndep.GetAllPossibilities()...,
-	)
+	binDeps := dependency.Dependency{}
+	for _, bin := range con.Binaries {
+		binDeps.Relations = append(binDeps.Relations, &dependency.Relation{
+			Possibilities: []*dependency.Possibility{
+				{
+					Name: bin.Package,
+					// TODO add version constraint if information for it is available
+				},
+			},
+		})
+	}
+
+	allPossi := binDeps.GetAllPossibilities()
+	allPossi = append(allPossi, con.Source.BuildDepends.GetAllPossibilities()...)
+	allPossi = append(allPossi, con.Source.BuildDependsIndep.GetAllPossibilities()...)
 	for _, bin := range con.Binaries {
 		for _, dep := range []dependency.Dependency{
 			bin.Depends,
