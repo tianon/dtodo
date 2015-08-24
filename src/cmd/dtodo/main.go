@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"log"
 
+	// TODO "github.com/tianon/dtodo/src/dnew"
+	"dnew"
+
 	"pault.ag/go/debian/control"
 	"pault.ag/go/debian/dependency"
 	"pault.ag/go/resolver"
@@ -41,11 +44,11 @@ func main() {
 		log.Fatalf("error: %v\n", err)
 	}
 
-	newQueue, err := ParseNewUrl(New822)
+	newQueue, err := dnew.ParseNewUrl(dnew.New822)
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 	}
-	newBinaries := map[string]NewEntry{}
+	newBinaries := map[string]dnew.NewEntry{}
 	for _, newPkg := range newQueue {
 		for _, newBin := range newPkg.Binary {
 			newBinaries[newBin] = newPkg
