@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
+	"regexp"
 
 	// TODO "github.com/tianon/dtodo/src/dnew"
 	"dnew"
 
+	"pault.ag/go/debian/changelog"
 	"pault.ag/go/debian/control"
 	"pault.ag/go/debian/dependency"
 	"pault.ag/go/resolver"
@@ -21,12 +23,29 @@ func main() {
 		log.Fatalf("error: %v\n", err)
 	}
 
-	// TODO configurable or something
-	suite := "unstable"
+	chg, err := changelog.ParseFileOne("debian/changelog")
+	if err != nil {
+		log.Fatalf("error: %v\n", err)
+	}
+
+	// TODO configurable or something to avoid guesswork
+	targetSuite := chg.Target
+	if targetSuite == "UNRELEASED" {
+		// check for "Upload to XYZ." in changelog
+		re := regexp.MustCompile(`^\s*\*?\s*Upload\s+to\s+(\S+?)\.?(\s+|$)`)
+		matches := re.FindStringSubmatch(chg.Changelog)
+		if matches != nil {
+			targetSuite = matches[1]
+		} else {
+			targetSuite = "unstable"
+		}
+	}
+	fmt.Printf("Assuming upload against %s.\n", targetSuite)
+
 	arch := "amd64"
 	index, err := resolver.GetBinaryIndex(
 		"http://httpredir.debian.org/debian",
-		suite,
+		targetSuite,
 		"main",
 		arch,
 	)
@@ -36,7 +55,7 @@ func main() {
 
 	incoming, err := resolver.GetBinaryIndex(
 		"http://incoming.debian.org/debian-buildd",
-		"buildd-"+suite,
+		"buildd-"+targetSuite,
 		"main",
 		arch,
 	)
