@@ -40,7 +40,7 @@ func main() {
 			targetSuite = "unstable"
 		}
 	}
-	fmt.Printf("Assuming upload against %s.\n", targetSuite)
+	fmt.Printf("Assuming upload against %s.\n\n", targetSuite)
 
 	arch := "amd64"
 	index, err := resolver.GetBinaryIndex(
@@ -52,6 +52,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 	}
+	// TODO use target suite to include more suites if necessary (ie, "experimental" needs "sid" too)
 
 	incoming, err := resolver.GetBinaryIndex(
 		"http://incoming.debian.org/debian-buildd",
