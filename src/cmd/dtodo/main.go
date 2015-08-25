@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	// TODO "github.com/tianon/dtodo/src/dnew"
 	"dnew"
@@ -40,7 +41,7 @@ func main() {
 			targetSuite = "unstable"
 		}
 	}
-	fmt.Printf("Assuming upload against %s.\n\n", targetSuite)
+	fmt.Printf("Target: %s\n\n", targetSuite)
 
 	arch := "amd64"
 	index, err := resolver.GetBinaryIndex(
@@ -75,31 +76,29 @@ func main() {
 		}
 	}
 
-	binDeps := dependency.Dependency{}
+	allDeps := dependency.Dependency{}
+
+	binRelation := dependency.Relation{}
 	for _, bin := range con.Binaries {
-		binDeps.Relations = append(binDeps.Relations, &dependency.Relation{
-			Possibilities: []*dependency.Possibility{
-				{
-					Name: bin.Package,
-					// TODO add version constraint if information for it is available
-				},
+		binRelation.Possibilities = append(binRelation.Possibilities, dependency.Possibility{
+			Name: bin.Package,
+			Version: &dependency.VersionRelation{
+				Operator: "=",
+				Number:   chg.Version.String(),
 			},
 		})
 	}
+	allDeps.Relations = append(allDeps.Relations, binRelation)
 
-	allPossi := binDeps.GetAllPossibilities()
-	allPossi = append(allPossi, con.Source.BuildDepends.GetAllPossibilities()...)
-	allPossi = append(allPossi, con.Source.BuildDependsIndep.GetAllPossibilities()...)
+	allDeps.Relations = append(allDeps.Relations, con.Source.BuildDepends.Relations...)
+	allDeps.Relations = append(allDeps.Relations, con.Source.BuildDependsIndep.Relations...)
+
 	for _, bin := range con.Binaries {
-		for _, dep := range []dependency.Dependency{
-			bin.Depends,
-			bin.Recommends,
-			bin.Suggests,
-			bin.Enhances,
-			bin.PreDepends,
-		} {
-			allPossi = append(allPossi, dep.GetAllPossibilities()...)
-		}
+		allDeps.Relations = append(allDeps.Relations, bin.Depends.Relations...)
+		allDeps.Relations = append(allDeps.Relations, bin.Recommends.Relations...)
+		allDeps.Relations = append(allDeps.Relations, bin.Suggests.Relations...)
+		allDeps.Relations = append(allDeps.Relations, bin.Enhances.Relations...)
+		allDeps.Relations = append(allDeps.Relations, bin.PreDepends.Relations...)
 	}
 
 	depArch, err := dependency.ParseArch("any")
@@ -107,20 +106,36 @@ func main() {
 		log.Fatalf("error: %v\n", err)
 	}
 
-	for _, possi := range allPossi {
-		can, why, _ := index.ExplainSatisfies(*depArch, possi)
-		if !can {
-			inCan, _, _ := incoming.ExplainSatisfies(*depArch, possi)
-			if !inCan {
-				if newPkg, ok := newBinaries[possi.Name]; ok {
-					newUrl := fmt.Sprintf("https://ftp-master.debian.org/new/%s_%s.html", newPkg.Source, newPkg.Version[0])
-					fmt.Printf("%s: in NEW: %s\n", possi.Name, newUrl)
-				} else {
-					fmt.Printf("%s: %s\n", possi.Name, why)
-				}
-			} else {
-				fmt.Printf("%s: in incoming!\n", possi.Name)
+	for _, relation := range allDeps.Relations {
+		notes := []string{}
+		for _, possi := range relation.Possibilities {
+			if possi.Substvar {
+				//fmt.Printf("ignoring substvar %s\n", possi)
+				continue
 			}
+			can, why, _ := index.ExplainSatisfies(*depArch, possi)
+			if !can {
+				inCan, _, _ := incoming.ExplainSatisfies(*depArch, possi)
+				if !inCan {
+					if newPkg, ok := newBinaries[possi.Name]; ok {
+						newUrl := fmt.Sprintf("https://ftp-master.debian.org/new/%s_%s.html", newPkg.Source, newPkg.Version[0])
+						notes = append(notes, fmt.Sprintf("NEW (%s): %s\n", possi.Name, newUrl))
+					} else {
+						notes = append(notes, why)
+					}
+				} else {
+					notes = append(notes, fmt.Sprintf("%s in incoming", possi.Name))
+				}
+			}
+		}
+		if len(notes) > 0 {
+			fmt.Printf("Relation: %s\n", relation)
+			if len(notes) > 1 {
+				fmt.Printf("Notes:\n %s\n", strings.Join(notes, "\n "))
+			} else {
+				fmt.Printf("Notes: %s\n", notes[0])
+			}
+			fmt.Printf("\n")
 		}
 	}
 }
