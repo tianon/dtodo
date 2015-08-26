@@ -119,7 +119,7 @@ func main() {
 				if !inCan {
 					if newPkg, ok := newBinaries[possi.Name]; ok {
 						newUrl := fmt.Sprintf("https://ftp-master.debian.org/new/%s_%s.html", newPkg.Source, newPkg.Version[0])
-						notes = append(notes, fmt.Sprintf("NEW (%s): %s\n", possi.Name, newUrl))
+						notes = append(notes, fmt.Sprintf("NEW (%s): %s", possi.Name, newUrl))
 					} else {
 						notes = append(notes, why)
 					}
