@@ -41,9 +41,16 @@ func main() {
 			targetSuite = "unstable"
 		}
 	}
-	fmt.Printf("Target: %s\n\n", targetSuite)
 
+	// TODO configurable
 	arch := "amd64"
+
+	fmt.Printf("Target: %s\n", targetSuite)
+	fmt.Printf("Source: %s\n", con.Source.Source)
+	fmt.Printf("Version: %s\n", chg.Version)
+	fmt.Printf("Architecture: %s\n", arch)
+	fmt.Printf("\n")
+
 	index, err := resolver.GetBinaryIndex(
 		"http://httpredir.debian.org/debian",
 		targetSuite,
