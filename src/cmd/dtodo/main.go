@@ -131,7 +131,7 @@ func main() {
 						notes = append(notes, why)
 					}
 				} else {
-					notes = append(notes, fmt.Sprintf("%s in incoming", possi.Name))
+					notes = append(notes, fmt.Sprintf("%s is in incoming", possi.Name))
 				}
 			}
 		}
