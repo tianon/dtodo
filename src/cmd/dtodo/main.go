@@ -113,7 +113,14 @@ func main() {
 		log.Fatalf("error: %v\n", err)
 	}
 
+	seenRelations := map[string]bool{}
 	for _, relation := range allDeps.Relations {
+		relationString := relation.String()
+		if seenRelations[relationString] {
+			continue
+		}
+		seenRelations[relationString] = true
+
 		notes := []string{}
 		for _, possi := range relation.Possibilities {
 			if possi.Substvar {
