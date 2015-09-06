@@ -15,6 +15,41 @@ import (
 	"pault.ag/go/resolver"
 )
 
+type Target struct {
+	Mirror     string
+	Suites     []string
+	Components []string
+	Arches     []string
+
+	resolver.Candidates
+}
+
+func NewTarget(mirror string, suites, components, arches []string) (*Target, error) {
+	target := Target{
+		Mirror:     mirror,
+		Suites:     suites,
+		Components: components,
+		Arches:     arches,
+
+		Candidates: resolver.Candidates{},
+	}
+	for _, suite := range suites {
+		for _, component := range components {
+			for _, arch := range arches {
+				err := resolver.AppendBinaryIndex(&target.Candidates, mirror, suite, component, arch)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+	return &target, nil
+}
+
+func (target Target) UrlTo(bin control.BinaryIndex) string {
+	return target.Mirror + "/" + bin.Filename
+}
+
 func main() {
 	log.SetFlags(log.Lshortfile)
 
@@ -43,30 +78,32 @@ func main() {
 	}
 
 	// TODO configurable
-	arch := "amd64"
+	arches := []string{"amd64", "i386"}
+	components := []string{"main", "contrib", "non-free"}
 
 	fmt.Printf("Target: %s\n", targetSuite)
-	fmt.Printf("Architecture: %s\n", arch)
+	fmt.Printf("Architectures: %s\n", arches)
+	fmt.Printf("Components: %s\n", components)
 	fmt.Printf("Source: %s\n", con.Source.Source)
 	fmt.Printf("Version: %s\n", chg.Version)
 	fmt.Printf("\n")
 
-	index, err := resolver.GetBinaryIndex(
+	index, err := NewTarget(
 		"http://httpredir.debian.org/debian",
-		targetSuite,
-		"main",
-		arch,
+		[]string{targetSuite},
+		components,
+		arches,
 	)
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 	}
 	// TODO use target suite to include more suites if necessary (ie, "experimental" needs "sid" too)
 
-	incoming, err := resolver.GetBinaryIndex(
+	incoming, err := NewTarget(
 		"http://incoming.debian.org/debian-buildd",
-		"buildd-"+targetSuite,
-		"main",
-		arch,
+		[]string{"buildd-" + targetSuite},
+		components,
+		arches,
 	)
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
@@ -129,7 +166,7 @@ func main() {
 			}
 			can, why, _ := index.ExplainSatisfies(*depArch, possi)
 			if !can {
-				inCan, _, _ := incoming.ExplainSatisfies(*depArch, possi)
+				inCan, _, incomingBins := incoming.ExplainSatisfies(*depArch, possi)
 				if !inCan {
 					if newPkg, ok := newBinaries[possi.Name]; ok {
 						newUrl := fmt.Sprintf("https://ftp-master.debian.org/new/%s_%s.html", newPkg.Source, newPkg.Version[0])
@@ -138,7 +175,7 @@ func main() {
 						notes = append(notes, why)
 					}
 				} else {
-					notes = append(notes, fmt.Sprintf("%s is in incoming", possi.Name))
+					notes = append(notes, fmt.Sprintf("incoming (%s): %s", possi.Name, incoming.UrlTo(incomingBins[0])))
 				}
 			}
 		}
