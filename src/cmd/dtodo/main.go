@@ -81,7 +81,7 @@ func main() {
 	arches := []string{"amd64", "i386"}
 	components := []string{"main", "contrib", "non-free"}
 
-	fmt.Printf("Target: %s\n", targetSuite)
+	fmt.Printf("Target: %s (%s)\n", targetSuite, chg.Target)
 	fmt.Printf("Architectures: %s\n", arches)
 	fmt.Printf("Components: %s\n", components)
 	fmt.Printf("Source: %s\n", con.Source.Source)
