@@ -67,11 +67,11 @@ func main() {
 	// TODO configurable or something to avoid guesswork
 	targetSuite := chg.Target
 	if targetSuite == "UNRELEASED" {
-		// check for "Upload to XYZ." in changelog
-		re := regexp.MustCompile(`^\s*\*?\s*Upload\s+to\s+(\S+?)\.?(\s+|$)`)
+		// check for "Upload to XYZ." or "Rebuild for XYZ." in changelog
+		re := regexp.MustCompile(`^\s*\*?\s*(Upload\s+to|Rebuild\s+for)\s+(\S+?)\.?(\s+|$)`)
 		matches := re.FindStringSubmatch(chg.Changelog)
 		if matches != nil {
-			targetSuite = matches[1]
+			targetSuite = matches[2]
 		} else {
 			targetSuite = "unstable"
 		}
