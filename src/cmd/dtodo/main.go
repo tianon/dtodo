@@ -15,6 +15,9 @@ import (
 	"pault.ag/go/resolver"
 )
 
+// TODO configurable; --pedantic ?
+const ignoreRelationSecondaryFails = true
+
 type Target struct {
 	Mirror     string
 	Suites     []string
@@ -158,6 +161,7 @@ func main() {
 		}
 		seenRelations[relationString] = true
 
+		oneCan := false
 		notes := []string{}
 		for _, possi := range relation.Possibilities {
 			if possi.Substvar {
@@ -177,7 +181,12 @@ func main() {
 				} else {
 					notes = append(notes, fmt.Sprintf("incoming (%s): %s", possi.Name, incoming.UrlTo(incomingBins[0])))
 				}
+			} else {
+				oneCan = true
 			}
+		}
+		if ignoreRelationSecondaryFails && oneCan {
+			continue
 		}
 		if len(notes) > 0 {
 			fmt.Printf("Relation: %s\n", relation)
