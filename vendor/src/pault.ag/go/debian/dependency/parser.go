@@ -153,7 +153,7 @@ func parsePossibility(input *Input, relation *Relation) error {
 		Name:          "",
 		Version:       nil,
 		Architectures: &ArchSet{Architectures: []Arch{}},
-		Stages:        &StageSet{Stages: []Stage{}},
+		StageSets:     []StageSet{},
 		Substvar:      false,
 	}
 
@@ -260,6 +260,12 @@ func parsePossibilityControllers(input *Input, possi *Possibility) error {
 				return err
 			}
 			continue
+		case '<':
+			err := parsePossibilityStageSet(input, possi)
+			if err != nil {
+				return err
+			}
+			continue
 		}
 		return fmt.Errorf("Trailing garbage in a Possibility: %c", peek)
 	}
@@ -343,14 +349,6 @@ func parsePossibilityArchs(input *Input, possi *Possibility) error {
 	eatWhitespace(input)
 	input.Next() /* Assert ch == '[' */
 
-	/* So the first line of each guy can be a not (!), so let's check for
-	 * that with a Peek :) */
-	peek := input.Peek()
-	if peek == '!' {
-		input.Next() /* Omnom */
-		possi.Architectures.Not = true
-	}
-
 	for {
 		peek := input.Peek()
 		switch peek {
@@ -373,6 +371,19 @@ func parsePossibilityArch(input *Input, possi *Possibility) error {
 	eatWhitespace(input)
 	arch := ""
 
+	// Exclamation marks may be prepended to each of the names. (It is not
+	// permitted for some names to be prepended with exclamation marks while
+	// others aren't.)
+	hasNot := input.Peek() == '!'
+	if hasNot {
+		input.Next() // '!'
+	}
+	if len(possi.Architectures.Architectures) == 0 {
+		possi.Architectures.Not = hasNot
+	} else if possi.Architectures.Not != hasNot {
+		return errors.New("Either the entire arch list needs negations, or none of it does -- no mix and match :/")
+	}
+
 	for {
 		peek := input.Peek()
 		switch peek {
@@ -392,6 +403,54 @@ func parsePossibilityArch(input *Input, possi *Possibility) error {
 			return nil
 		}
 		arch += string(input.Next())
+	}
+}
+
+/* */
+func parsePossibilityStageSet(input *Input, possi *Possibility) error {
+	eatWhitespace(input)
+	input.Next() /* Assert ch == '<' */
+
+	stageSet := StageSet{}
+	for {
+		peek := input.Peek()
+		switch peek {
+		case 0:
+			return errors.New("Oh no. Reached EOF before StageSet finished")
+		case '>':
+			input.Next()
+			possi.StageSets = append(possi.StageSets, stageSet)
+			return nil
+		}
+
+		err := parsePossibilityStage(input, &stageSet)
+		if err != nil {
+			return err
+		}
+	}
+}
+
+/* */
+func parsePossibilityStage(input *Input, stageSet *StageSet) error {
+	eatWhitespace(input)
+
+	stage := Stage{}
+	for {
+		peek := input.Peek()
+		switch peek {
+		case 0:
+			return errors.New("Oh no. Reached EOF before Stage finished")
+		case '!':
+			input.Next()
+			if stage.Not {
+				return errors.New("Double-negation (!!) of a single Stage is not permitted :(")
+			}
+			stage.Not = !stage.Not
+		case '>', ' ': /* Let our parent deal with both of these */
+			stageSet.Stages = append(stageSet.Stages, stage)
+			return nil
+		}
+		stage.Name += string(input.Next())
 	}
 }
 

@@ -43,15 +43,15 @@ func (set ArchSet) String() string {
 	if len(set.Architectures) == 0 {
 		return ""
 	}
-	arches := []string{}
-	for _, arch := range set.Architectures {
-		arches = append(arches, arch.String())
-	}
 	not := ""
 	if set.Not {
 		not = "!"
 	}
-	return "[" + not + strings.Join(arches, " ") + "]"
+	arches := []string{}
+	for _, arch := range set.Architectures {
+		arches = append(arches, not + arch.String())
+	}
+	return "[" + strings.Join(arches, " ") + "]"
 }
 
 func (version VersionRelation) String() string {
@@ -89,8 +89,8 @@ func (possi Possibility) String() string {
 	if possi.Version != nil {
 		str += " " + possi.Version.String()
 	}
-	if possi.Stages != nil {
-		if stages := possi.Stages.String(); stages != "" {
+	for _, stageSet := range possi.StageSets {
+		if stages := stageSet.String(); stages != "" {
 			str += " " + stages
 		}
 	}
