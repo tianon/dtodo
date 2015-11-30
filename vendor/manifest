@@ -2,6 +2,13 @@
 	"version": 0,
 	"dependencies": [
 		{
+			"importpath": "github.com/tianon/gdbuild/src/aptsources",
+			"repository": "https://github.com/tianon/gdbuild",
+			"revision": "28712550820a572a9bc3d7f6967b22f42ee94910",
+			"branch": "master",
+			"path": "/src/aptsources"
+		},
+		{
 			"importpath": "golang.org/x/crypto/cast5",
 			"repository": "https://go.googlesource.com/crypto",
 			"revision": "beef0f4390813b96e8e68fd78570396d0f4751fc",

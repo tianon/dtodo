@@ -9,6 +9,8 @@ import (
 	// TODO "github.com/tianon/dtodo/src/dnew"
 	"dnew"
 
+	"github.com/tianon/gdbuild/src/aptsources"
+
 	"pault.ag/go/debian/changelog"
 	"pault.ag/go/debian/control"
 	"pault.ag/go/debian/dependency"
@@ -91,16 +93,11 @@ func main() {
 	fmt.Printf("Version: %s\n", chg.Version)
 	fmt.Printf("\n")
 
-	index, err := NewTarget(
-		"http://httpredir.debian.org/debian",
-		[]string{targetSuite},
-		components,
-		arches,
-	)
+	indexSources := aptsources.SuiteSources(targetSuite, components...)
+	index, err := indexSources.FetchCandidates(arches...)
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 	}
-	// TODO use target suite to include more suites if necessary (ie, "experimental" needs "sid" too)
 
 	incoming, err := NewTarget(
 		"http://incoming.debian.org/debian-buildd",
