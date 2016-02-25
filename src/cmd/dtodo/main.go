@@ -9,7 +9,7 @@ import (
 	// TODO "github.com/tianon/dtodo/src/dnew"
 	"dnew"
 
-	"github.com/tianon/gdbuild/src/aptsources"
+	"github.com/tianon/go-aptsources"
 
 	"pault.ag/go/debian/changelog"
 	"pault.ag/go/debian/control"
