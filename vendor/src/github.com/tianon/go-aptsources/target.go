@@ -4,10 +4,16 @@ import (
 	"strings"
 )
 
-func SuiteSources(suite string, components ...string) Sources {
+var (
+	DefaultTypes = []string{"deb", "deb-src"}
+	DefaultDebianURIs = []string{"http://httpredir.debian.org/debian"}
+)
+
+func DebianSources(suite string, components ...string) Sources {
+	suite = strings.TrimSuffix(suite, "-security")
 	source := Source{
-		Types:      []string{"deb", "deb-src"},
-		URIs:       []string{"http://httpredir.debian.org/debian"},
+		Types:      DefaultTypes,
+		URIs:       DefaultDebianURIs,
 		Suites:     []string{suite},
 		Components: components,
 	}

@@ -93,7 +93,7 @@ func main() {
 	fmt.Printf("Version: %s\n", chg.Version)
 	fmt.Printf("\n")
 
-	indexSources := aptsources.SuiteSources(targetSuite, components...)
+	indexSources := aptsources.DebianSources(targetSuite, components...)
 	index, err := indexSources.FetchCandidates(arches...)
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
