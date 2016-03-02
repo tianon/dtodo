@@ -82,7 +82,7 @@ func main() {
 		}
 	}
 
-	// TODO configurable
+	// TODO configurable (or auto-sensed from the mirror and/or package source)
 	arches := []string{"amd64", "i386"}
 	components := []string{"main", "contrib", "non-free"}
 
