@@ -29,8 +29,8 @@ type Target struct {
 	resolver.Candidates
 }
 
-func NewTarget(mirror string, suites, components, arches []string) (*Target, error) {
-	target := Target{
+func NewTarget(mirror string, suites, components, arches []string) *Target {
+	return &Target{
 		Mirror:     mirror,
 		Suites:     suites,
 		Components: components,
@@ -38,17 +38,25 @@ func NewTarget(mirror string, suites, components, arches []string) (*Target, err
 
 		Candidates: resolver.Candidates{},
 	}
-	for _, suite := range suites {
-		for _, component := range components {
-			for _, arch := range arches {
-				err := resolver.AppendBinaryIndex(&target.Candidates, mirror, suite, component, arch)
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
+}
+
+func (target Target) AptSource() aptsources.Source {
+	return aptsources.Source{
+		Types:         []string{"deb"},
+		URIs:          []string{target.Mirror},
+		Suites:        target.Suites,
+		Components:    target.Components,
+		Architectures: target.Arches,
 	}
-	return &target, nil
+}
+
+func (target *Target) Fetch() error {
+	can, err := target.AptSource().FetchCandidates()
+	if err != nil {
+		return err
+	}
+	target.Candidates = *can
+	return nil
 }
 
 func (target Target) UrlTo(bin control.BinaryIndex) string {
@@ -99,13 +107,13 @@ func main() {
 		log.Fatalf("error: %v\n", err)
 	}
 
-	incoming, err := NewTarget(
+	incoming := NewTarget(
 		"http://incoming.debian.org/debian-buildd",
 		[]string{"buildd-" + targetSuite},
 		components,
 		arches,
 	)
-	if err != nil {
+	if err = incoming.Fetch(); err != nil {
 		log.Fatalf("error: %v\n", err)
 	}
 
