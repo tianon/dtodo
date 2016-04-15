@@ -5,9 +5,12 @@ import (
 )
 
 var (
-	DefaultTypes              = []string{"deb", "deb-src"}
+	DefaultTypes = []string{"deb", "deb-src"}
+
 	DefaultDebianURIs         = []string{"http://httpredir.debian.org/debian"}
 	DefaultDebianSecurityURIs = []string{"http://security.debian.org"}
+
+	DefaultUbuntuURIs = []string{"http://archive.ubuntu.com/ubuntu"}
 )
 
 func DebianSources(suite string, components ...string) Sources {
@@ -52,4 +55,15 @@ func DebianSources(suite string, components ...string) Sources {
 		}
 	}
 	return sources
+}
+
+func UbuntuSources(suite string, components ...string) Sources {
+	suite = strings.TrimSuffix(suite, "-updates")
+	suite = strings.TrimSuffix(suite, "-security")
+	return New(Source{
+		Types:      DefaultTypes,
+		URIs:       DefaultUbuntuURIs,
+		Suites:     []string{suite, suite + "-updates", suite + "-security"},
+		Components: components,
+	})
 }
