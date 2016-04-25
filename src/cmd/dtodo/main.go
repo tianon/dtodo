@@ -188,6 +188,17 @@ func main() {
 				}
 			} else {
 				oneCan = true
+
+				// TODO figure out how we can incorporate this ("Section: oldlibs" from debian/control doesn't propagate to the Packages file on the mirror, so we'd have to parse the .deb itself to get this info, which is fairly untenable)
+				/*
+				// NOTE "bins" is the last return value in the call to "index.ExplainSatisfies" above
+				for _, bin := range bins {
+					if bin.Section == "oldlibs" {
+						oneCan = false
+						notes = append(notes, fmt.Sprintf(`%s (%s) is "Section: oldlibs", which suggests it is likely transitional`, bin.Package, bin.Version.String()))
+					}
+				}
+				*/
 			}
 		}
 		if ignoreRelationSecondaryFails && oneCan {
